@@ -625,12 +625,7 @@ static void pflash_cfi02_realize(DeviceState *dev, Error **errp)
 
     pflash_setup_mappings(pfl);
     pfl->rom_mode = 1;
-
-    if (pfl->mappings > 0) {
-        sysbus_init_mmio(SYS_BUS_DEVICE(dev), &pfl->mem);
-    } else {
-        sysbus_init_mmio(SYS_BUS_DEVICE(dev), &pfl->orig_mem);
-    }
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &pfl->mem);
 
     if (pfl->bs) {
         pfl->ro = bdrv_is_read_only(pfl->bs);
