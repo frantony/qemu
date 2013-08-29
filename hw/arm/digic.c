@@ -27,6 +27,10 @@
 #include "hw/sysbus.h"
 #include "hw/boards.h"
 
+#define DIGIC4_TIMER0    0xc0210000
+#define DIGIC4_TIMER1    0xc0210100
+#define DIGIC4_TIMER2    0xc0210200
+
 typedef struct DigicState {
     ARMCPU *cpu;
     MemoryRegion ram;
@@ -45,6 +49,10 @@ static DigicState *digic4_create(void)
         fprintf(stderr, "Unable to find CPU definition\n");
         exit(1);
     }
+
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER0, NULL);
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER1, NULL);
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER2, NULL);
 
     return s;
 }
