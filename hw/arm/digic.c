@@ -36,5 +36,9 @@ DigicState *digic4_init(void)
         exit(1);
     }
 
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER0, NULL);
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER1, NULL);
+    sysbus_create_simple("digic-timer", DIGIC4_TIMER2, NULL);
+
     return s;
 }
