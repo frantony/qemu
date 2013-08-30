@@ -13,6 +13,7 @@
 #define DIGIC4_TIMER0    0xc0210000
 #define DIGIC4_TIMER1    0xc0210100
 #define DIGIC4_TIMER2    0xc0210200
+#define DIGIC4_UART      0xc0800000
 
 typedef struct DigicState {
     ARMCPU *cpu;

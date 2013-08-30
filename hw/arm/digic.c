@@ -40,5 +40,7 @@ DigicState *digic4_init(void)
     sysbus_create_simple("digic-timer", DIGIC4_TIMER1, NULL);
     sysbus_create_simple("digic-timer", DIGIC4_TIMER2, NULL);
 
+    sysbus_create_simple("digic-uart", DIGIC4_UART, NULL);
+
     return s;
 }
