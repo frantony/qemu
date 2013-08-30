@@ -32,7 +32,6 @@
 #include "hw/hw.h"
 #include "hw/sysbus.h"
 #include "sysemu/char.h"
-#include "qemu/error-report.h"
 
 enum {
     R_TX = 0x00,
@@ -79,9 +78,9 @@ static uint64_t uart_read(void *opaque, hwaddr addr,
         break;
 
     default:
-        error_report("digic_uart: read access to unknown register 0x"
+		qemu_log_mask(LOG_GUEST_ERROR,
+				"digic_uart: read access to unknown register 0x"
                 TARGET_FMT_plx, addr << 2);
-        break;
     }
 
     return r;
@@ -107,9 +106,9 @@ static void uart_write(void *opaque, hwaddr addr, uint64_t value,
         break;
 
     default:
-        error_report("digic_uart: write access to unknown register 0x"
+		qemu_log_mask(LOG_GUEST_ERROR,
+				"digic_uart: write access to unknown register 0x"
                 TARGET_FMT_plx, addr << 2);
-        break;
     }
 }
 
