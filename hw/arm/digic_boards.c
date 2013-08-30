@@ -1,6 +1,8 @@
 #include "hw/boards.h"
+#include "exec/address-spaces.h"
 #include "hw/block/flash.h"
 #include "hw/loader.h"
+#include "hw/arm/digic.h"
 
 #define DIGIC4_ROM0      0xf0000000
 #define DIGIC4_ROM1      0xf8000000
@@ -15,25 +17,27 @@ typedef struct DigicBoardState {
 
 typedef struct DigicBoard {
     hwaddr ram_size;
-    void (*add_rom0)(DigicState *, hwaddr, const char *);
+    void (*add_rom0)(DigicBoardState *, hwaddr, const char *);
     const char *rom0_filename;
-    void (*add_rom1)(DigicState *, hwaddr, const char *);
+    void (*add_rom1)(DigicBoardState *, hwaddr, const char *);
     const char *rom1_filename;
     hwaddr start_addr;
 } DigicBoard;
 
-static void digic4_setup_ram(DigicState *s, hwaddr ram_size)
+static void digic4_board_setup_ram(DigicBoardState *s, hwaddr ram_size)
 {
     memory_region_init_ram(&s->ram, NULL, "ram", ram_size);
     memory_region_add_subregion(get_system_memory(), 0, &s->ram);
     vmstate_register_ram_global(&s->ram);
 }
 
-static void init_digic4_board(DigicBoard *board)
+static void digic4_board_init(DigicBoard *board)
 {
-    DigicState *s = digic4_create();
+    DigicBoardState *s = g_new(DigicBoardState, 1);
 
-    digic4_setup_ram(s, board->ram_size);
+    s->digic = digic4_init();
+
+    digic4_board_setup_ram(s, board->ram_size);
 
     if (board->add_rom0) {
         board->add_rom0(s, DIGIC4_ROM0, board->rom0_filename);
@@ -43,10 +47,10 @@ static void init_digic4_board(DigicBoard *board)
         board->add_rom1(s, DIGIC4_ROM1, board->rom1_filename);
     }
 
-    s->cpu->env.regs[15] = board->start_addr;
+    s->digic->cpu->env.regs[15] = board->start_addr;
 }
 
-static void digic4_add_k8p3215uqb_rom(DigicState *s, hwaddr addr,
+static void digic4_add_k8p3215uqb_rom(DigicBoardState *s, hwaddr addr,
         const char *filename)
 {
 #define FLASH_K8P3215UQB_SIZE (4 * 1024 * 1024)
@@ -88,7 +92,7 @@ static DigicBoard a1100_board = {
 
 static void init_a1100(QEMUMachineInitArgs *args)
 {
-    init_digic4_board(&a1100_board);
+    digic4_board_init(&a1100_board);
 }
 
 static QEMUMachine canon_a1100 = {

@@ -49,17 +49,16 @@ enum {
 #define DIGIC_UART(obj) \
     OBJECT_CHECK(DigicUartState, (obj), TYPE_DIGIC_UART)
 
-struct DigicUartState {
+typedef struct DigicUartState {
     SysBusDevice parent_obj;
 
     MemoryRegion regs_region;
     CharDriverState *chr;
 
     uint32_t regs[R_MAX];
-};
-typedef struct DigicUartState DigicUartState;
+} DigicUartState;
 
-static uint64_t uart_read(void *opaque, hwaddr addr,
+static uint64_t digic_uart_read(void *opaque, hwaddr addr,
                           unsigned size)
 {
     DigicUartState *s = opaque;
@@ -86,7 +85,7 @@ static uint64_t uart_read(void *opaque, hwaddr addr,
     return r;
 }
 
-static void uart_write(void *opaque, hwaddr addr, uint64_t value,
+static void digic_uart_write(void *opaque, hwaddr addr, uint64_t value,
                        unsigned size)
 {
     DigicUartState *s = opaque;
@@ -97,7 +96,7 @@ static void uart_write(void *opaque, hwaddr addr, uint64_t value,
     switch (addr) {
     case R_TX:
         if (s->chr) {
-            qemu_chr_fe_write(s->chr, &ch, 1);
+            qemu_chr_fe_write_all(s->chr, &ch, 1);
         }
         break;
 
@@ -113,8 +112,8 @@ static void uart_write(void *opaque, hwaddr addr, uint64_t value,
 }
 
 static const MemoryRegionOps uart_mmio_ops = {
-    .read = uart_read,
-    .write = uart_write,
+    .read = digic_uart_read,
+    .write = digic_uart_write,
     .valid = {
         .min_access_size = 4,
         .max_access_size = 4,
@@ -154,20 +153,18 @@ static void digic_uart_reset(DeviceState *d)
     s->regs[R_ST] = ST_TX_RDY;
 }
 
-static int digic_uart_init(SysBusDevice *dev)
+static void digic_uart_realize(DeviceState *dev, Error **errp)
 {
     DigicUartState *s = DIGIC_UART(dev);
 
     memory_region_init_io(&s->regs_region, OBJECT(s), &uart_mmio_ops, s,
                           "digic-uart", R_MAX * 4);
-    sysbus_init_mmio(dev, &s->regs_region);
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->regs_region);
 
     s->chr = qemu_char_get_next_serial();
     if (s->chr) {
         qemu_chr_add_handlers(s->chr, uart_can_rx, uart_rx, uart_event, s);
     }
-
-    return 0;
 }
 
 static const VMStateDescription vmstate_digic_uart = {
@@ -184,9 +181,8 @@ static const VMStateDescription vmstate_digic_uart = {
 static void digic_uart_class_init(ObjectClass *klass, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
-    SysBusDeviceClass *k = SYS_BUS_DEVICE_CLASS(klass);
 
-    k->init = digic_uart_init;
+    dc->realize = digic_uart_realize;
     dc->reset = digic_uart_reset;
     dc->vmsd = &vmstate_digic_uart;
 }

@@ -1,5 +1,5 @@
 /*
- * QEMU model of the Canon SoC.
+ * QEMU model of the Canon DIGIC SoC.
  *
  * Copyright (C) 2013 Antony Pavlov <antonynpavlov@gmail.com>
  *
@@ -23,19 +23,10 @@
  *
  */
 
-#include "exec/address-spaces.h"
 #include "hw/sysbus.h"
+#include "hw/arm/digic.h"
 
-#define DIGIC4_TIMER0    0xc0210000
-#define DIGIC4_TIMER1    0xc0210100
-#define DIGIC4_TIMER2    0xc0210200
-#define DIGIC4_UART      0xc0800000
-
-typedef struct DigicState {
-    ARMCPU *cpu;
-} DigicState;
-
-DigicState *digic4_create(void)
+DigicState *digic4_init(void)
 {
     DigicState *s = g_new(DigicState, 1);
 
