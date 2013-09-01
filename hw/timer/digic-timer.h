@@ -1,5 +1,5 @@
 /*
- * Misc Canon DIGIC declarations.
+ * Canon DIGIC timer block declarations.
  *
  * Copyright (C) 2013 Antony Pavlov <antonynpavlov@gmail.com>
  *
@@ -15,27 +15,22 @@
  *
  */
 
-#ifndef HW_ARM_DIGIC_H
-#define HW_ARM_DIGIC_H
+#ifndef HW_TIMER_DIGIC_TIMER_H
+#define HW_TIMER_DIGIC_TIMER_H
 
-#include "cpu.h"
+#include "hw/sysbus.h"
+#include "qemu/typedefs.h"
+#include "hw/ptimer.h"
 
-#include "hw/timer/digic-timer.h"
+#define TYPE_DIGIC_TIMER "digic-timer"
+#define DIGIC_TIMER(obj) OBJECT_CHECK(DigicTimerState, (obj), TYPE_DIGIC_TIMER)
 
-#define TYPE_DIGIC "digic"
+typedef struct DigicTimerState {
+    SysBusDevice parent_obj;
 
-#define DIGIC(obj) OBJECT_CHECK(DigicState, (obj), TYPE_DIGIC)
+    MemoryRegion iomem;
+    QEMUBH *bh;
+    ptimer_state *ptimer;
+} DigicTimerState;
 
-#define DIGIC4_NB_TIMERS 3
-
-typedef struct DigicState {
-    /*< private >*/
-    DeviceState parent_obj;
-    /*< public >*/
-
-    ARMCPU cpu;
-
-    DigicTimerState timer[DIGIC4_NB_TIMERS];
-} DigicState;
-
-#endif /* HW_ARM_DIGIC_H */
+#endif /* HW_TIMER_DIGIC_TIMER_H */
