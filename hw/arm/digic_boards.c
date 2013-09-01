@@ -41,6 +41,10 @@ typedef struct DigicBoardState {
 
 typedef struct DigicBoard {
     hwaddr ram_size;
+    void (*add_rom0)(DigicBoardState *, hwaddr, const char *);
+    const char *rom0_def_filename;
+    void (*add_rom1)(DigicBoardState *, hwaddr, const char *);
+    const char *rom1_def_filename;
     hwaddr start_addr;
 } DigicBoard;
 
@@ -67,11 +71,71 @@ static void digic4_board_init(DigicBoard *board)
 
     digic4_board_setup_ram(s, board->ram_size);
 
+    if (board->add_rom0) {
+        board->add_rom0(s, DIGIC4_ROM0_BASE, board->rom0_def_filename);
+    }
+
+    if (board->add_rom1) {
+        board->add_rom1(s, DIGIC4_ROM1_BASE, board->rom1_def_filename);
+    }
+
     s->digic->cpu.env.regs[15] = board->start_addr;
+}
+
+static void digic_load_rom(DigicBoardState *s, hwaddr addr,
+                           hwaddr max_size, const char *def_filename)
+{
+
+    target_long rom_size;
+    const char *filename;
+
+    if (bios_name) {
+        filename = bios_name;
+    } else {
+        filename = def_filename;
+    }
+
+    if (filename) {
+        char *fn = qemu_find_file(QEMU_FILE_TYPE_BIOS, filename);
+
+        if (!fn) {
+            fprintf(stderr, "Couldn't find rom image '%s'.\n", filename);
+            exit(1);
+        }
+
+        rom_size = load_image_targphys(fn, addr, max_size);
+        if (rom_size < 0 || rom_size > max_size) {
+            fprintf(stderr, "Couldn't load rom image '%s'\n", filename);
+            exit(1);
+        }
+    }
+}
+
+/*
+ * Samsung K8P3215UQB
+ * 64M Bit (4Mx16) Page Mode / Multi-Bank NOR Flash Memory
+ */
+static void digic4_add_k8p3215uqb_rom(DigicBoardState *s, hwaddr addr,
+                                      const char *def_filename)
+{
+#define FLASH_K8P3215UQB_SIZE (4 * 1024 * 1024)
+#define FLASH_K8P3215UQB_SECTOR_SIZE (64 * 1024)
+
+    pflash_cfi02_register(addr, NULL, "pflash", FLASH_K8P3215UQB_SIZE,
+                          NULL, FLASH_K8P3215UQB_SECTOR_SIZE,
+                          FLASH_K8P3215UQB_SIZE / FLASH_K8P3215UQB_SECTOR_SIZE,
+                          DIGIC4_ROM_MAX_SIZE / FLASH_K8P3215UQB_SIZE,
+                          4,
+                          0x00EC, 0x007E, 0x0003, 0x0001,
+                          0x0555, 0x2aa, 0);
+
+    digic_load_rom(s, addr, FLASH_K8P3215UQB_SIZE, def_filename);
 }
 
 static DigicBoard digic4_board_canon_a1100 = {
     .ram_size = 64 * 1024 * 1024,
+    .add_rom1 = digic4_add_k8p3215uqb_rom,
+    .rom1_def_filename = "canon-a1100-rom1.bin",
     /* CHDK recommends this address for ROM disassembly */
     .start_addr = 0xffc00000,
 };
