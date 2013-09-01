@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef __DIGIC_H__
-#define __DIGIC_H__
+#ifndef HW_ARM_DIGIC_H
+#define HW_ARM_DIGIC_H
 
 #include "cpu.h"
 
@@ -26,10 +26,10 @@
 
 typedef struct DigicState {
     /*< private >*/
-    Object parent_obj;
+    DeviceState parent_obj;
     /*< public >*/
 
     ARMCPU cpu;
 } DigicState;
 
-#endif /* __DIGIC_H__ */
+#endif /* HW_ARM_DIGIC_H */
