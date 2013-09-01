@@ -33,25 +33,16 @@
 #include "hw/ptimer.h"
 #include "qemu/main-loop.h"
 
+#include "hw/timer/digic-timer.h"
+
 #ifdef DEBUG_DIGIC_TIMER
 #define DPRINTF(fmt, ...) printf("%s: " fmt , __func__, ## __VA_ARGS__)
 #else
 #define DPRINTF(fmt, ...) do {} while (0)
 #endif
 
-#define TYPE_DIGIC_TIMER "digic-timer"
-#define DIGIC_TIMER(obj) OBJECT_CHECK(DigicTimerState, (obj), TYPE_DIGIC_TIMER)
-
 # define DIGIC_TIMER_CONTROL 0x00
 # define DIGIC_TIMER_VALUE 0x0c
-
-typedef struct DigicTimerState {
-    SysBusDevice parent_obj;
-
-    MemoryRegion iomem;
-    QEMUBH *bh;
-    ptimer_state *ptimer;
-} DigicTimerState;
 
 static uint64_t digic_timer_read(void *opaque, hwaddr offset,
         unsigned size)
@@ -99,37 +90,28 @@ static void digic_timer_tick(void *opaque)
     ptimer_run(s->ptimer, 1);
 }
 
-static int digic_timer_init(SysBusDevice *dev)
+static void digic_timer_init(Object *obj)
 {
-    DigicTimerState *s = DIGIC_TIMER(dev);
+    DigicTimerState *s = DIGIC_TIMER(obj);
 
     s->bh = qemu_bh_new(digic_timer_tick, s);
     s->ptimer = ptimer_init(s->bh);
 
     /* FIXME: there is no documentation on Digic timer
-     * frquency setup so let's it always run on 1 MHz
+     * frequency setup so let's it always run on 1 MHz
      * */
     ptimer_set_freq(s->ptimer, 1 * 1000 * 1000);
 
     memory_region_init_io(&s->iomem, OBJECT(s), &digic_timer_ops, s,
             TYPE_DIGIC_TIMER, 0x100);
-    sysbus_init_mmio(dev, &s->iomem);
-
-    return 0;
-}
-
-static void digic_timer_class_init(ObjectClass *klass, void *data)
-{
-    SysBusDeviceClass *sdc = SYS_BUS_DEVICE_CLASS(klass);
-
-    sdc->init = digic_timer_init;
+    sysbus_init_mmio(SYS_BUS_DEVICE(obj), &s->iomem);
 }
 
 static const TypeInfo digic_timer_info = {
     .name = TYPE_DIGIC_TIMER,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_size = sizeof(DigicTimerState),
-    .class_init = digic_timer_class_init,
+    .instance_init = digic_timer_init,
 };
 
 static void digic_timer_register_type(void)

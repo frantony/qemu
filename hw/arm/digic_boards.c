@@ -13,8 +13,6 @@ typedef struct DigicBoardState {
     MemoryRegion ram;
 } DigicBoardState;
 
-    MemoryRegion ram;
-
 typedef struct DigicBoard {
     hwaddr ram_size;
     void (*add_rom0)(DigicBoardState *, hwaddr, const char *);
@@ -33,9 +31,17 @@ static void digic4_board_setup_ram(DigicBoardState *s, hwaddr ram_size)
 
 static void digic4_board_init(DigicBoard *board)
 {
+    Error *err = NULL;
+
     DigicBoardState *s = g_new(DigicBoardState, 1);
 
-    s->digic = digic4_init();
+    s->digic = DIGIC(object_new(TYPE_DIGIC));
+    object_property_set_bool(OBJECT(s->digic), true, "realized", &err);
+    if (err != NULL) {
+        fprintf(stderr, "Couldn't realize DIGIC SoC: %s\n",
+                error_get_pretty(err));
+        exit(1);
+    }
 
     digic4_board_setup_ram(s, board->ram_size);
 
@@ -47,7 +53,7 @@ static void digic4_board_init(DigicBoard *board)
         board->add_rom1(s, DIGIC4_ROM1, board->rom1_filename);
     }
 
-    s->digic->cpu->env.regs[15] = board->start_addr;
+    s->digic->cpu.env.regs[15] = board->start_addr;
 }
 
 static void digic4_add_k8p3215uqb_rom(DigicBoardState *s, hwaddr addr,
@@ -83,7 +89,7 @@ static void digic4_add_k8p3215uqb_rom(DigicBoardState *s, hwaddr addr,
     }
 }
 
-static DigicBoard a1100_board = {
+static DigicBoard digic4_board_canon_a1100 = {
     .ram_size = 64 * 1024 * 1024,
     .add_rom1 = digic4_add_k8p3215uqb_rom,
     .rom1_filename = "canon-a1100-rom1.bin",
@@ -93,7 +99,7 @@ static DigicBoard a1100_board = {
 
 static void canon_a1100_init(QEMUMachineInitArgs *args)
 {
-    digic4_board_init(&a1100_board);
+    digic4_board_init(&digic4_board_canon_a1100);
 }
 
 static QEMUMachine canon_a1100 = {

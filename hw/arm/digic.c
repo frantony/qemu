@@ -24,23 +24,87 @@
  */
 
 #include "hw/sysbus.h"
+#include "target-arm/cpu-qom.h"
 #include "hw/arm/digic.h"
 
-DigicState *digic4_init(void)
+static void digic_init(Object *obj)
 {
-    DigicState *s = g_new(DigicState, 1);
+    DigicState *s = DIGIC(obj);
+    DeviceState *dev;
+    int i;
 
-    s->cpu = cpu_arm_init("arm946");
-    if (!s->cpu) {
-        fprintf(stderr, "Unable to find CPU definition\n");
-        exit(1);
+    object_initialize(&s->cpu, "arm946-" TYPE_ARM_CPU);
+	object_property_add_child(obj, "cpu", OBJECT(&s->cpu), NULL);
+
+    for (i = 0; i < DIGIC4_NB_TIMERS; i++) {
+        object_initialize(&s->timer[i], TYPE_DIGIC_TIMER);
+        dev = DEVICE(&s->timer[i]);
+        qdev_set_parent_bus(dev, sysbus_get_default());
     }
 
-    sysbus_create_simple("digic-timer", DIGIC4_TIMER0, NULL);
-    sysbus_create_simple("digic-timer", DIGIC4_TIMER1, NULL);
-    sysbus_create_simple("digic-timer", DIGIC4_TIMER2, NULL);
+	/* FIXME: use i */
+	object_property_add_child(obj, "timer[0]", OBJECT(&s->timer[0]), NULL);
+	object_property_add_child(obj, "timer[1]", OBJECT(&s->timer[1]), NULL);
+	object_property_add_child(obj, "timer[2]", OBJECT(&s->timer[2]), NULL);
 
-    sysbus_create_simple("digic-uart", DIGIC4_UART, NULL);
-
-    return s;
+    object_initialize(&s->uart, TYPE_DIGIC_UART);
+    dev = DEVICE(&s->uart);
+    qdev_set_parent_bus(dev, sysbus_get_default());
+	object_property_add_child(obj, "uart", OBJECT(&s->uart), NULL);
 }
+
+static void digic_realize(DeviceState *dev, Error **errp)
+{
+    DigicState *s = DIGIC(dev);
+    SysBusDevice *sysbusdev;
+    Error *err = NULL;
+    int i;
+
+    object_property_set_bool(OBJECT(&s->cpu), true, "realized", &err);
+    if (err != NULL) {
+        error_propagate(errp, err);
+        return;
+    }
+
+    for (i = 0; i < DIGIC4_NB_TIMERS; i++) {
+        object_property_set_bool(OBJECT(&s->timer[i]), true, "realized", &err);
+        if (err != NULL) {
+            error_propagate(errp, err);
+            return;
+        }
+
+        sysbusdev = SYS_BUS_DEVICE(&s->timer[i]);
+        sysbus_mmio_map(sysbusdev, 0, DIGIC4_TIMER(i));
+    }
+
+    object_property_set_bool(OBJECT(&s->uart), true, "realized", &err);
+    if (err != NULL) {
+        error_propagate(errp, err);
+        return;
+    }
+
+    sysbusdev = SYS_BUS_DEVICE(&s->uart);
+    sysbus_mmio_map(sysbusdev, 0, DIGIC4_UART);
+}
+
+static void digic_class_init(ObjectClass *oc, void *data)
+{
+    DeviceClass *dc = DEVICE_CLASS(oc);
+
+    dc->realize = digic_realize;
+}
+
+static const TypeInfo digic_type_info = {
+    .name = TYPE_DIGIC,
+    .parent = TYPE_DEVICE,
+    .instance_size = sizeof(DigicState),
+    .instance_init = digic_init,
+    .class_init = digic_class_init,
+};
+
+static void digic_register_types(void)
+{
+    type_register_static(&digic_type_info);
+}
+
+type_init(digic_register_types)

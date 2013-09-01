@@ -33,30 +33,12 @@
 #include "hw/sysbus.h"
 #include "sysemu/char.h"
 
-enum {
-    R_TX = 0x00,
-    R_RX,
-    R_ST = (0x14 >> 2),
-    R_MAX
-};
+#include "hw/char/digic-uart.h"
 
 enum {
     ST_RX_RDY = (1 << 0),
     ST_TX_RDY = (1 << 1),
 };
-
-#define TYPE_DIGIC_UART "digic-uart"
-#define DIGIC_UART(obj) \
-    OBJECT_CHECK(DigicUartState, (obj), TYPE_DIGIC_UART)
-
-typedef struct DigicUartState {
-    SysBusDevice parent_obj;
-
-    MemoryRegion regs_region;
-    CharDriverState *chr;
-
-    uint32_t regs[R_MAX];
-} DigicUartState;
 
 static uint64_t digic_uart_read(void *opaque, hwaddr addr,
                           unsigned size)
