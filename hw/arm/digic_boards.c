@@ -26,6 +26,13 @@
 #include "hw/boards.h"
 #include "exec/address-spaces.h"
 #include "hw/arm/digic.h"
+#include "hw/block/flash.h"
+#include "hw/loader.h"
+#include "sysemu/sysemu.h"
+
+#define DIGIC4_ROM0_BASE      0xf0000000
+#define DIGIC4_ROM1_BASE      0xf8000000
+# define DIGIC4_ROM_MAX_SIZE      0x08000000
 
 typedef struct DigicBoardState {
     DigicState *digic;
