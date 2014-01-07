@@ -168,6 +168,37 @@ struct TCState {
     int32_t CP0_Debug_tcstatus;
 };
 
+typedef struct VmipsCpu VmipsCpu;
+struct VmipsCpu {
+	// Important registers:
+	uint32_t pc;      // Program counter
+	uint32_t reg[32]; // General-purpose registers
+	uint32_t instr;   // The current instruction
+	uint32_t hi, lo;  // Division and multiplication results
+
+	// Exception bookkeeping data.
+	uint32_t last_epc;
+	int last_prio;
+	uint32_t next_epc;
+
+	uint32_t cp0_reg[32];
+	bool exception_pending;
+
+	// Delay slot handling.
+	int delay_state;
+	uint32_t delay_pc;
+
+	// Cached option values that we use in the CPU core.
+	bool opt_excmsg;
+	bool opt_reportirq;
+	bool opt_excpriomsg;
+	bool opt_haltbreak;
+	bool opt_haltibe;
+	bool opt_haltjrra;
+	bool opt_instdump;
+	bool opt_bigendian; // True if CPU in big endian mode.
+};
+
 typedef struct CPUMIPSState CPUMIPSState;
 struct CPUMIPSState {
     TCState active_tc;
@@ -477,6 +508,7 @@ struct CPUMIPSState {
     const mips_def_t *cpu_model;
     void *irq[8];
     QEMUTimer *timer; /* Internal timer */
+    VmipsCpu vmips;
 };
 
 #include "cpu-qom.h"
