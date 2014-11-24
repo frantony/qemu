@@ -185,4 +185,3 @@ static void tulip_register_types(void)
 }
 
 type_init(tulip_register_types)
-

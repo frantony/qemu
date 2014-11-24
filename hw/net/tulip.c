@@ -554,4 +554,3 @@ void tulip_timer(void *opaque)
     timer_mod(s->timer,
         qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + get_ticks_per_sec() / 10);
 }
-
