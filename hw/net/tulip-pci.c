@@ -93,8 +93,6 @@ static void pci_tulip_uninit(PCIDevice *dev)
     PCITulipState *d = PCI_TULIP(dev);
 
     qemu_free_irq(d->state.irq);
-    memory_region_destroy(&d->state.mmio);
-    memory_region_destroy(&d->io_bar);
     timer_del(d->state.timer);
     timer_free(d->state.timer);
     eeprom93xx_free(&dev->qdev, d->state.eeprom);
