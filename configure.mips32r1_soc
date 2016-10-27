@@ -1,0 +1,19 @@
+cap="no" ./configure \
+    --extra-cflags="-Wno-maybe-uninitialized" \
+    --audio-drv-list="" \
+    --disable-attr \
+    --disable-blobs \
+    --disable-bluez \
+    --disable-brlapi \
+    --disable-curl \
+    --disable-curses \
+    --disable-docs \
+    --disable-kvm \
+    --disable-spice \
+    --disable-sdl \
+    --disable-vde \
+    --disable-vnc-sasl \
+    --disable-werror \
+    --enable-trace-backend=simple \
+    --disable-stack-protector \
+    --target-list=mips-softmmu

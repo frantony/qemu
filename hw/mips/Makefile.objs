@@ -1,4 +1,5 @@
 obj-y += mips_r4k.o mips_malta.o mips_mipssim.o
+obj-$(CONFIG_MIPS32R1_SOC) += mips_mips32r1_soc.o
 obj-y += addr.o cputimer.o mips_int.o
 obj-$(CONFIG_JAZZ) += mips_jazz.o
 obj-$(CONFIG_FULONG) += mips_fulong2e.o
